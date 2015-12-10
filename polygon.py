@@ -1,10 +1,14 @@
 # coding: utf8
+import copy
 
 
 class Point:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
+    def __str__(self):
+        return str(self.x) + ', ' + str(self.y)
 
 
 class Line:
@@ -33,16 +37,16 @@ class Polygon:
         if len(point) > 2:
             self.line.append(Line(point[0], point[-1]))
 
-    # 填充多边形颜色
-    def paint(self, canvas):
+    # 填充多边形颜色 返回区间
+    def paint(self):
+        ret = []
         net = {}
         # 初始化新边表头指针net
         for line in self.line:
             if line.yMin not in net:
                 net[line.yMin] = []
-            net[line.yMin].append(line)
+            net[line.yMin].append(copy.deepcopy(line))
         aet = []
-        print self.yMin, self.yMax
         for y in range(self.yMin, self.yMax + 1):
             # 把新边表net[line]中的边节点加入aet表中  使之按x坐标递增排序
             if y in net:
@@ -58,9 +62,33 @@ class Polygon:
                             aet.pop(i)
                     i += 1
             for i in range(0, len(aet) - 1, 2):
-                canvas.create_line(aet[i].x, y, aet[i+1].x, y, fill='red')
+                ret.append([Point(aet[i].x, y), Point(aet[i+1].x, y)])
             aet = [w for w in aet if w.yMax > y]
             for w in aet:
                 w.x += w.delta
+        return ret
 
+    # 根据区间填充颜色
+    @staticmethod
+    def fill(canvas, interval, color='red'):
+        for (a, b) in interval:
+            canvas.create_line(a.x, a.y, b.x, b.y, fill=color)
 
+    # 根据两个多边形的区间求交
+    @staticmethod
+    def merge(list_a, list_b):
+        compare = lambda a, b: (a[0].y < b[0].y) or ((a[0].y == b[0].y) and (a[1].x < b[1].x))
+        ret = []
+        while (len(list_a) > 0) and (len(list_b) > 0):
+            a = list_a[0]
+            b = list_b[0]
+            point_1 = Point(max(a[0].x, b[0].x), a[0].y)
+            point_2 = Point(min(a[1].x, b[1].x), a[1].y)
+            if (a[0].y == b[0].y) and (point_1.x < point_2.x):
+                ret.append([point_1, point_2])
+            if compare(a, b):
+                list_a.pop(0)
+            else:
+                list_b.pop(0)
+
+        return ret

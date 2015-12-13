@@ -4,8 +4,8 @@ import copy
 
 class Point:
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
+        self.x = int(round(x))
+        self.y = int(round(y))
 
     def __str__(self):
         return str(self.x) + ', ' + str(self.y)
